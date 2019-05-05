@@ -42,7 +42,7 @@ import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.remoting.netty.NettyRemotingClient;
 
-/**
+/** 默认的消息生产者实现类
  * This class is the entry point for applications intending to send messages.
  * </p>
  *

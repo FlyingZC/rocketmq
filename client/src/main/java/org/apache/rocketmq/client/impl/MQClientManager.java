@@ -50,7 +50,7 @@ public class MQClientManager {
         if (null == instance) {
             instance =
                 new MQClientInstance(clientConfig.cloneClientConfig(),
-                    this.factoryIndexGenerator.getAndIncrement(), clientId, rpcHook);
+                    this.factoryIndexGenerator.getAndIncrement(), clientId, rpcHook);// 创建MQClientInstance, 同一个 clientId 只会创建一个 MQClientInstance
             MQClientInstance prev = this.factoryTable.putIfAbsent(clientId, instance);
             if (prev != null) {
                 instance = prev;

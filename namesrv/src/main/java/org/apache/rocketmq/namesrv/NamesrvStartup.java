@@ -78,11 +78,11 @@ public class NamesrvStartup {
             System.exit(-1);
             return null;
         }
-
+        // 1.填充 namesrvConfig和 nettyServerConfig
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setListenPort(9876);
-        if (commandLine.hasOption('c')) {
+        if (commandLine.hasOption('c')) {// -c configFile, 通过 -c命令指定配置文件的路径
             String file = commandLine.getOptionValue('c');
             if (file != null) {
                 InputStream in = new BufferedInputStream(new FileInputStream(file));
@@ -122,7 +122,7 @@ public class NamesrvStartup {
 
         MixAll.printObjectProperties(log, namesrvConfig);
         MixAll.printObjectProperties(log, nettyServerConfig);
-
+        // 根据启动属性创建并初始化 NamesrvController实例,该实例为 NameSrv的核心控制器
         final NamesrvController controller = new NamesrvController(namesrvConfig, nettyServerConfig);
 
         // remember all configs to prevent discard
@@ -142,15 +142,15 @@ public class NamesrvStartup {
             controller.shutdown();
             System.exit(-3);
         }
-
+        // 注册 JVM 钩子函数
         Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(log, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                controller.shutdown();
+                controller.shutdown();// 若代码中使用了线程池,一种优雅停机的方式就是注册一个 JVM 钩子函数,在 JVM进程关闭之前,先将线程池关闭,及时释放资源
                 return null;
             }
         }));
-
+        // 启动服务器, 以便监听 Broker,消息生产者 的网络请求
         controller.start();
 
         return controller;

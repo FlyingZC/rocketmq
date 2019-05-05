@@ -571,9 +571,9 @@ public class CommitLog {
 
         long eclipseTimeInLock = 0;
         MappedFile unlockMappedFile = null;
-        MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile();
+        MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile();// 相当于每一个持久化的文件
 
-        putMessageLock.lock(); //spin or ReentrantLock ,depending on store config
+        putMessageLock.lock(); //spin or ReentrantLock ,depending on store config 加锁写,即将消息写到 commitLog中是串行的
         try {
             long beginLockTimestamp = this.defaultMessageStore.getSystemClock().now();
             this.beginTimeInLock = beginLockTimestamp;
@@ -581,11 +581,11 @@ public class CommitLog {
             // Here settings are stored timestamp, in order to ensure an orderly
             // global
             msg.setStoreTimestamp(beginLockTimestamp);
-
+            // {ROCKET_HOME}/store/commitLog目录下不存在任何文件,说明本次消息是第一次消息发送,用偏移量 0创建第一个 commit文件,文件为 00000000000000000000
             if (null == mappedFile || mappedFile.isFull()) {
                 mappedFile = this.mappedFileQueue.getLastMappedFile(0); // Mark: NewFile may be cause noise
             }
-            if (null == mappedFile) {
+            if (null == mappedFile) {// 如果文件创建失败，抛出 CREATE_MAPEDFILE_FAILED，很有可能是磁盘空间不足或权限不够
                 log.error("create mapped file1 error, topic: " + msg.getTopic() + " clientAddr: " + msg.getBornHostString());
                 beginTimeInLock = 0;
                 return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED, null);
@@ -622,7 +622,7 @@ public class CommitLog {
             eclipseTimeInLock = this.defaultMessageStore.getSystemClock().now() - beginLockTimestamp;
             beginTimeInLock = 0;
         } finally {
-            putMessageLock.unlock();
+            putMessageLock.unlock();// 释放锁
         }
 
         if (eclipseTimeInLock > 500) {
@@ -1199,9 +1199,9 @@ public class CommitLog {
             long wroteOffset = fileFromOffset + byteBuffer.position();
 
             this.resetByteBuffer(hostHolder, 8);
-            String msgId = MessageDecoder.createMessageId(this.msgIdMemory, msgInner.getStoreHostBytes(hostHolder), wroteOffset);
+            String msgId = MessageDecoder.createMessageId(this.msgIdMemory, msgInner.getStoreHostBytes(hostHolder), wroteOffset);// 创建全局消息 id = ip + port + 消息偏移量
 
-            // Record ConsumeQueue information
+            // Record ConsumeQueue information 获取该消息 在消息队列的偏移量
             keyBuilder.setLength(0);
             keyBuilder.append(msgInner.getTopic());
             keyBuilder.append('-');
@@ -1210,7 +1210,7 @@ public class CommitLog {
             Long queueOffset = CommitLog.this.topicQueueTable.get(key);
             if (null == queueOffset) {
                 queueOffset = 0L;
-                CommitLog.this.topicQueueTable.put(key, queueOffset);
+                CommitLog.this.topicQueueTable.put(key, queueOffset);// CommitLog中保存了 当前所有消息队列的 当前待写入偏移量
             }
 
             // Transaction messages that require special handling
@@ -1245,7 +1245,7 @@ public class CommitLog {
             final int topicLength = topicData.length;
 
             final int bodyLength = msgInner.getBody() == null ? 0 : msgInner.getBody().length;
-
+            // 计算消息总长度
             final int msgLen = calMsgLength(bodyLength, topicLength, propertiesLength);
 
             // Exceeds the maximum message
@@ -1256,7 +1256,7 @@ public class CommitLog {
             }
 
             // Determines whether there is sufficient free space
-            if ((msgLen + END_FILE_MIN_BLANK_LENGTH) > maxBlank) {
+            if ((msgLen + END_FILE_MIN_BLANK_LENGTH) > maxBlank) {// 若消息长度 + END_FILE_MIN_BLANK_LENGTH 大于 CommitLog文件的空闲空间,则返回 AppendMessageStatus.END_OF_FILE
                 this.resetByteBuffer(this.msgStoreItemMemory, maxBlank);
                 // 1 TOTALSIZE
                 this.msgStoreItemMemory.putInt(maxBlank);
@@ -1265,9 +1265,9 @@ public class CommitLog {
                 // 3 The remaining space may be any value
                 // Here the length of the specially set maxBlank
                 final long beginTimeMills = CommitLog.this.defaultMessageStore.now();
-                byteBuffer.put(this.msgStoreItemMemory.array(), 0, maxBlank);
+                byteBuffer.put(this.msgStoreItemMemory.array(), 0, maxBlank);// 将消息内容存储到 ByteBuffer中
                 return new AppendMessageResult(AppendMessageStatus.END_OF_FILE, wroteOffset, maxBlank, msgId, msgInner.getStoreTimestamp(),
-                    queueOffset, CommitLog.this.defaultMessageStore.now() - beginTimeMills);
+                    queueOffset, CommitLog.this.defaultMessageStore.now() - beginTimeMills);// 然后创建 AppendMessageResult并返回. 这里只是将消息存储在 MappedFile对应的内存映射 Buffer中,并没有刷写到磁盘
             }
 
             // Initialization of storage space

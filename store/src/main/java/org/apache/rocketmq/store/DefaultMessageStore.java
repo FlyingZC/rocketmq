@@ -58,34 +58,34 @@ import org.apache.rocketmq.store.index.IndexService;
 import org.apache.rocketmq.store.index.QueryOffsetResult;
 import org.apache.rocketmq.store.schedule.ScheduleMessageService;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
-
+/** 消息存储实现类 */
 public class DefaultMessageStore implements MessageStore {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
-
+    // 消息存储配置
     private final MessageStoreConfig messageStoreConfig;
     // CommitLog
     private final CommitLog commitLog;
-
+    // 消息队列存储缓存表,按消息主题分组
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
-
+    /** 消息队列文件 ConsumeQueue刷盘线程 */
     private final FlushConsumeQueueService flushConsumeQueueService;
-
+    /** 清除 CommitLog文件 服务 */
     private final CleanCommitLogService cleanCommitLogService;
-
+    /** 清除 consumeQueue文件 服务 */
     private final CleanConsumeQueueService cleanConsumeQueueService;
-
+    /** 索引文件实现类 */
     private final IndexService indexService;
-
+    /** MappedFile分配服务 */
     private final AllocateMappedFileService allocateMappedFileService;
-
+    /** CommitLog消息分发，根据 CommitLog文件构建 ConsumeQueue、IndexFile文件 */
     private final ReputMessageService reputMessageService;
-
+    /** 存储 HA机制 */
     private final HAService haService;
-
+    /**  */
     private final ScheduleMessageService scheduleMessageService;
-
+    /**  */
     private final StoreStatsService storeStatsService;
-
+    /** 消息堆内存缓存 */
     private final TransientStorePool transientStorePool;
 
     private final RunningFlags runningFlags = new RunningFlags();
@@ -94,15 +94,15 @@ public class DefaultMessageStore implements MessageStore {
     private final ScheduledExecutorService scheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor(new ThreadFactoryImpl("StoreScheduledThread"));
     private final BrokerStatsManager brokerStatsManager;
-    private final MessageArrivingListener messageArrivingListener;
-    private final BrokerConfig brokerConfig;
+    private final MessageArrivingListener messageArrivingListener;/**消息拉取 长轮询模式 消息达到 监听器*/
+    private final BrokerConfig brokerConfig;// broker配置属性
 
     private volatile boolean shutdown = true;
-
+    /** 文件刷盘检测点 */
     private StoreCheckpoint storeCheckpoint;
 
     private AtomicLong printTimes = new AtomicLong(0);
-
+    /** CommitLog 文件转发请求 */
     private final LinkedList<CommitLogDispatcher> dispatcherList;
 
     private RandomAccessFile lockFile;
@@ -352,7 +352,7 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     public PutMessageResult putMessage(MessageExtBrokerInner msg) {
-        if (this.shutdown) {
+        if (this.shutdown) {// 若 1.当前 Broker停止工作 或 2.Broker为 SLAVE角色或 3.当前 rocket不支持写入则拒绝消息写入
             log.warn("message store has shutdown, so putMessage is forbidden");
             return new PutMessageResult(PutMessageStatus.SERVICE_NOT_AVAILABLE, null);
         }
@@ -376,7 +376,7 @@ public class DefaultMessageStore implements MessageStore {
         } else {
             this.printTimes.set(0);
         }
-
+        // 如果消息主题长度超过 256个字符、消息属性长度超过 65536个字符将拒绝该消息写人
         if (msg.getTopic().length() > Byte.MAX_VALUE) {
             log.warn("putMessage message topic length too long " + msg.getTopic().length());
             return new PutMessageResult(PutMessageStatus.MESSAGE_ILLEGAL, null);

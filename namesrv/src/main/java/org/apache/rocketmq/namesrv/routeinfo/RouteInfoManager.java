@@ -44,16 +44,16 @@ import org.apache.rocketmq.common.protocol.route.QueueData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 import org.apache.rocketmq.common.sysflag.TopicSysFlag;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
-
+// 路由元数据
 public class RouteInfoManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
     private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
-    private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
-    private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
-    private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
-    private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
+    private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;// Topic 消息队列路由信息，消息发送时根据路由表进行负载均衡
+    private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;// Broker 基础信息,包含 brokerName、所属集群名称、主备 Broker地址
+    private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;// Broker 集群信息，存储集群中所有 Broker 名称
+    private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;// Broker状态信息. NameServer每次收到心跳包时会替换该信息
+    private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;// Broker 上的 FilterServer 列表，用于类模式消息过滤
 
     public RouteInfoManager() {
         this.topicQueueTable = new HashMap<String, List<QueueData>>(1024);
@@ -426,12 +426,12 @@ public class RouteInfoManager {
         return null;
     }
 
-    public void scanNotActiveBroker() {
+    public void scanNotActiveBroker() {// 移除失效的 broker
         Iterator<Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, BrokerLiveInfo> next = it.next();
             long last = next.getValue().getLastUpdateTimestamp();
-            if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {
+            if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {// 最后更新时间 + 失效时间 < 当前时间
                 RemotingUtil.closeChannel(next.getValue().getChannel());
                 it.remove();
                 log.warn("The broker channel expired, {} {}ms", next.getKey(), BROKER_CHANNEL_EXPIRED_TIME);

@@ -17,19 +17,19 @@
 package org.apache.rocketmq.remoting.netty;
 
 public class NettyServerConfig implements Cloneable {
-    private int listenPort = 8888;
-    private int serverWorkerThreads = 8;
-    private int serverCallbackExecutorThreads = 0;
-    private int serverSelectorThreads = 3;
-    private int serverOnewaySemaphoreValue = 256;
-    private int serverAsyncSemaphoreValue = 64;
-    private int serverChannelMaxIdleTimeSeconds = 120;
+    private int listenPort = 8888;// NameServer 监听端口，该值默认会被初始化为 9876
+    private int serverWorkerThreads = 8;// Netty 业务线程池线程数
+    private int serverCallbackExecutorThreads = 0;// Netty public任务线程池线程数
+    private int serverSelectorThreads = 3;// IO线程池线程个数
+    private int serverOnewaySemaphoreValue = 256;// send oneway 消息请求井发度(broker端参数)
+    private int serverAsyncSemaphoreValue = 64;// 异步消息发送最大并发度(broker端参数)
+    private int serverChannelMaxIdleTimeSeconds = 120;// 网络连接最大空闲时间,超时则关闭
 
-    private int serverSocketSndBufSize = NettySystemConfig.socketSndbufSize;
-    private int serverSocketRcvBufSize = NettySystemConfig.socketRcvbufSize;
-    private boolean serverPooledByteBufAllocatorEnable = true;
+    private int serverSocketSndBufSize = NettySystemConfig.socketSndbufSize;// 网络 socket 发送缓存区大小,默认64k
+    private int serverSocketRcvBufSize = NettySystemConfig.socketRcvbufSize;// 网络 socket 接收缓存区大小,默认64k
+    private boolean serverPooledByteBufAllocatorEnable = true;// ByteBuffer 是否开启 缓存,建议开启
 
-    /**
+    /** 是否启用 Epoll IO 模型， Linux环境建议开启
      * make make install
      *
      *
