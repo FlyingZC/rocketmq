@@ -540,11 +540,11 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                 MessageQueue mqSelected = this.selectOneMessageQueue(topicPublishInfo, lastBrokerName);// 选择一个 queue
                 if (mqSelected != null) {
                     mq = mqSelected;
-                    brokersSent[times] = mq.getBrokerName();
+                    brokersSent[times] = mq.getBrokerName();// 获取 messageQueue中的 broker信息
                     try {
                         beginTimestampPrev = System.currentTimeMillis();
                         long costTime = beginTimestampPrev - beginTimestampFirst;
-                        if (timeout < costTime) {
+                        if (timeout < costTime) {// 从 namesrv取topic信息 到 选择一个 queue所耗费的时间
                             callTimeout = true;
                             break;
                         }
@@ -669,7 +669,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         if (topicPublishInfo.isHaveTopicRouterInfo() || topicPublishInfo.ok()) {// 返回 topic信息
             return topicPublishInfo;
         } else {
-            this.mQClientFactory.updateTopicRouteInfoFromNameServer(topic, true, this.defaultMQProducer);
+            this.mQClientFactory.updateTopicRouteInfoFromNameServer(topic, true, this.defaultMQProducer);// 获取topic失败了,再重试一次
             topicPublishInfo = this.topicPublishInfoTable.get(topic);
             return topicPublishInfo;
         }

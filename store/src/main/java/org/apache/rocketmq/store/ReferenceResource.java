@@ -39,7 +39,7 @@ public abstract class ReferenceResource {
     public boolean isAvailable() {
         return this.available;
     }
-
+    /**销毁 mappedFile, intervalForcibly 表示拒绝被销毁的最大存活时间*/
     public void shutdown(final long intervalForcibly) {
         if (this.available) {
             this.available = false;

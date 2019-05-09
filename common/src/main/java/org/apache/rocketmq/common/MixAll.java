@@ -123,7 +123,7 @@ public class MixAll {
     public static String brokerVIPChannel(final boolean isChange, final String brokerAddr) {
         if (isChange) {
             String[] ipAndPort = brokerAddr.split(":");
-            String brokerAddrNew = ipAndPort[0] + ":" + (Integer.parseInt(ipAndPort[1]) - 2);
+            String brokerAddrNew = ipAndPort[0] + ":" + (Integer.parseInt(ipAndPort[1]) - 2);// vip通道 就是 把端口号减小2作为发送的端口 ?
             return brokerAddrNew;
         } else {
             return brokerAddr;

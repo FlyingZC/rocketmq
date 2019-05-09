@@ -27,7 +27,7 @@ import org.apache.rocketmq.store.config.StorePathConfigHelper;
 public class ConsumeQueue {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
-    public static final int CQ_STORE_UNIT_SIZE = 20;
+    public static final int CQ_STORE_UNIT_SIZE = 20;// commitQueue存储单元的大小
     private static final InternalLogger LOG_ERROR = InternalLoggerFactory.getLogger(LoggerName.STORE_ERROR_LOGGER_NAME);
 
     private final DefaultMessageStore defaultMessageStore;
@@ -150,9 +150,9 @@ public class ConsumeQueue {
             }
         }
     }
-
+    /**根据消息存储时间来查找具体的 offset*/
     public long getOffsetInQueueByTime(final long timestamp) {
-        MappedFile mappedFile = this.mappedFileQueue.getMappedFileByTime(timestamp);
+        MappedFile mappedFile = this.mappedFileQueue.getMappedFileByTime(timestamp);// 根据时间戳定位到 物理文件
         if (mappedFile != null) {
             long offset = 0;
             int low = minLogicOffset > mappedFile.getFileFromOffset() ? (int) (minLogicOffset - mappedFile.getFileFromOffset()) : 0;
@@ -493,7 +493,7 @@ public class ConsumeQueue {
                 return result;
             }
         }
-        return null;
+        return null;// 如果该 offset 小于 minLogicOffset,则返回 null,说明该消息已被删除
     }
 
     public ConsumeQueueExt.CqExtUnit getExt(final long offset) {

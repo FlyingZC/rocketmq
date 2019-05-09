@@ -25,14 +25,14 @@ public class ThreadLocalIndex {
 
     public int getAndIncrement() {
         Integer index = this.threadLocalIndex.get();
-        if (null == index) {
+        if (null == index) {// 设置初值
             index = Math.abs(random.nextInt());
             if (index < 0)
                 index = 0;
             this.threadLocalIndex.set(index);
         }
 
-        index = Math.abs(index + 1);
+        index = Math.abs(index + 1);// 加 1
         if (index < 0)
             index = 0;
 
